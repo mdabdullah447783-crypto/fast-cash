@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FAST CASH PRO</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#071426;color:white;font-family:Arial,sans-serif}
+header{background:#10243d;padding:20px;text-align:center;font-size:24px;font-weight:bold;color:#36e69b}
+.balance{margin:15px;background:linear-gradient(120deg,#087b58,#12bd83);padding:22px;border-radius:15px}
+.balance h2{margin:8px 0;font-size:30px}
+.container{padding:15px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.item{background:#142b46;padding:22px 10px;border-radius:12px;text-align:center;cursor:pointer;border:1px solid #24415f}
+.item span{display:block;font-size:25px;margin-bottom:8px}
+.page{display:none;background:#10243d;margin-top:15px;padding:18px;border-radius:12px}
+.page.active{display:block}
+input,select,button{width:100%;padding:13px;margin:7px 0;border:0;border-radius:8px;font-size:15px}
+input,select{background:#eaf2fa;color:#111}
+button{background:#12bd83;color:#071426;font-weight:bold;cursor:pointer}
+.task{background:#193653;padding:12px;border-radius:10px;margin:10px 0}
+.small{font-size:12px;color:#a9c0d8}
+</style>
+</head>
+<body>
+
+<header>💰 FAST CASH PRO</header>
+
+<div class="balance">
+<div>আপনার বর্তমান ব্যালেন্স</div>
+<h2>৳ <span id="balance">0.00</span></h2>
+<div class="small">Earn • Task • Reward</div>
+</div>
+
+<div class="container">
+<div class="grid">
+<div class="item" onclick="show('home')"><span>🏠</span>Home</div>
+<div class="item" onclick="show('dashboard')"><span>📊</span>Dashboard</div>
+<div class="item" onclick="show('tasks')"><span>📝</span>Task</div>
+<div class="item" onclick="show('ads')"><span>📺</span>Watch Ads</div>
+<div class="item" onclick="show('recharge')"><span>💳</span>Recharge</div>
+<div class="item" onclick="show('withdraw')"><span>💸</span>Withdraw</div>
+<div class="item" onclick="show('referral')"><span>👥</span>Referral</div>
+<div class="item" onclick="show('history')"><span>📜</span>History</div>
+<div class="item" onclick="show('admin')"><span>⚙️</span>Admin Panel</div>
+</div>
+
+<div id="home" class="page active">
+<h3>স্বাগতম FAST CASH PRO-তে</h3>
+<p>এখানে Task সম্পন্ন করে Demo Reward সংগ্রহ করতে পারবেন।</p>
+</div>
+
+<div id="dashboard" class="page">
+<h3>Dashboard</h3>
+<p>বর্তমান ব্যালেন্স: ৳ <span id="dashBalance">0.00</span></p>
+<p>আপনার আয় ও লেনদেনের তথ্য এখানে দেখা যাবে।</p>
+</div>
+
+<div id="tasks" class="page">
+<h3>Available Tasks</h3>
+<div id="taskList"></div>
+</div>
+
+<div id="ads" class="page">
+<h3>Watch Ads</h3>
+<p>ডেমো বিজ্ঞাপন রিওয়ার্ড</p>
+<button onclick="earnAd()">বিজ্ঞাপন দেখুন ও রিওয়ার্ড নিন</button>
+</div>
+
+<div id="recharge" class="page">
+<h3>Recharge Request</h3>
+<select id="method">
+<option>Bkash</option>
+<option>Nagad</option>
+<option>Rocket</option>
+</select>
+<input id="rAmount" type="number" placeholder="টাকার পরিমাণ">
+<input id="trx" placeholder="Transaction ID">
+<button onclick="recharge()">Submit Recharge</button>
+</div>
+
+<div id="withdraw" class="page">
+<h3>Withdraw Request</h3>
+<input id="wAmount" type="number" placeholder="টাকার পরিমাণ">
+<select id="wMethod">
+<option>Bkash</option>
+<option>Nagad</option>
+<option>Rocket</option>
+</select>
+<input id="number" placeholder="আপনার মোবাইল নম্বর">
+<button onclick="withdraw()">Withdraw Now</button>
+</div>
+
+<div id="referral" class="page">
+<h3>Referral System</h3>
+<p>আপনার Referral Link:</p>
+<input id="refLink" readonly>
+<button onclick="copyRef()">Copy Referral Link</button>
+</div>
+
+<div id="history" class="page">
+<h3>Transaction History</h3>
+<div id="historyList">এখনো কোনো লেনদেন নেই।</div>
+</div>
+
+<div id="admin" class="page">
+<h3>Admin Panel</h3>
+<input id="pin" type="password" placeholder="Admin PIN">
+<button onclick="login()">Login</button>
+<div id="adminArea" style="display:none">
+<h4>নতুন Task যোগ করুন</h4>
+<input id="taskName" placeholder="Task Name">
+<input id="taskReward" type="number" placeholder="Reward (টাকা)">
+<button onclick="addTask()">Add Task</button>
+<h4>Minimum Withdraw</h4>
+<input id="minimum" type="number" value="50">
+<button onclick="saveMinimum()">Save Minimum</button>
+<h4>Recharge ও Withdraw Requests</h4>
+<div id="requests"></div>
+</div>
+</div>
+</div>
+
+<script>
+let balance=Number(localStorage.getItem("balance")||0);
+let tasks=JSON.parse(localStorage.getItem("tasks")||"[]");
+let history=JSON.parse(localStorage.getItem("history")||"[]");
+let requests=JSON.parse(localStorage.getItem("requests")||"[]");
+let minimum=Number(localStorage.getItem("minimum")||50);
+
+function save(){
+localStorage.setItem("balance",balance);
+localStorage.setItem("tasks",JSON.stringify(tasks));
+localStorage.setItem("history",JSON.stringify(history));
+localStorage.setItem("requests",JSON.stringify(requests));
+update();
+}
+function update(){
+document.getElementById("balance").innerText=balance.toFixed(2);
+document.getElementById("dashBalance").innerText=balance.toFixed(2);
+}
+function show(id){
+document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+document.getElementById(id).classList.add("active");
+if(id==="tasks")renderTasks();
+if(id==="history")renderHistory();
+if(id==="admin")renderRequests();
+}
+function addHistory(text){
+history.unshift(text);
+save();
+}
+function renderTasks(){
+let box=document.getElementById("taskList");
+box.innerHTML="";
+tasks.forEach((t,i)=>{
+box.innerHTML+=`<div class="task"><b>${t.name}</b><p>Reward: ৳${t.reward}</p><button onclick="completeTask(${i})">Complete Task</button></div>`;
+});
+if(!tasks.length)box.innerHTML="এখনো কোনো Task যোগ করা হয়নি।";
+}
+function completeTask(i){
+let t=tasks[i];
+balance+=Number(t.reward);
+addHistory("Task Reward: "+t.name+" +৳"+t.reward);
+alert("Demo Reward যোগ হয়েছে!");
+renderTasks();
+}
+function earnAd(){
+balance+=1;
+addHistory("Demo Ad Reward +৳1");
+alert("Demo Reward ৳1 যোগ হয়েছে");
+}
+function recharge(){
+let amount=Number(document.getElementById("rAmount").value);
+let trx=document.getElementById("trx").value;
+if(amount<=0||!trx)return alert("সঠিক তথ্য দিন");
+requests.push({type:"Recharge",amount,method:document.getElementById("method").value,trx,status:"Pending"});
+save();
+alert("Recharge request জমা হয়েছে (Demo)");
+}
+function withdraw(){
+let amount=Number(document.getElementById("wAmount").value);
+let number=document.getElementById("number").value;
+if(amount<minimum)return alert("Minimum Withdraw ৳"+minimum);
+if(amount>balance||!number)return alert("ব্যালেন্স বা নম্বর সঠিক নয়");
+requests.push({type:"Withdraw",amount,method:document.getElementById("wMethod").value,number,status:"Pending"});
+save();
+alert("Withdraw request জমা হয়েছে (Demo)");
+}
+function login(){
+if(document.getElementById("pin").value==="1234"){
+document.getElementById("adminArea").style.display="block";
+renderRequests();
+}else alert("ভুল PIN");
+}
+function addTask(){
+let name=document.getElementById("taskName").value;
+let reward=Number(document.getElementById("taskReward").value);
+if(!name||reward<=0)return alert("সঠিক তথ্য দিন");
+tasks.push({name,reward});
+save();
+renderTasks();
+alert("Task যোগ হয়েছে");
+}
+function saveMinimum(){
+minimum=Number(document.getElementById("minimum").value);
+localStorage.setItem("minimum",minimum);
+alert("Minimum Withdraw সংরক্ষণ হয়েছে");
+}
+function renderRequests(){
+let box=document.getElementById("requests");
+if(!box)return;
+box.innerHTML="";
+requests.forEach((r,i)=>{
+box.innerHTML+=`<div class="task">${r.type}: ৳${r.amount}<br>${r.method}<br>Status: ${r.status}
+${r.type==="Recharge"?"<br>TRX: "+r.trx:""}
+${r.type==="Withdraw"?"<br>Number: "+r.number:""}
+${r.status==="Pending"?`<button onclick="approve(${i})">Approve</button><button onclick="reject(${i})">Reject</button>`:""}
+</div>`;
+});
+if(!requests.length)box.innerHTML="কোনো Request নেই।";
+}
+function approve(i){
+let r=requests[i];
+if(r.status!=="Pending")return;
+if(r.type==="Recharge")balance+=r.amount;
+if(r.type==="Withdraw")balance-=r.amount;
+r.status="Approved";
+addHistory(r.type+" Approved ৳"+r.amount);
+renderRequests();
+}
+function reject(i){
+requests[i].status="Rejected";
+save();
+renderRequests();
+}
+function renderHistory(){
+document.getElementById("historyList").innerHTML=history.length?history.map(x=>"<div class='task'>"+x+"</div>").join(""):"এখনো কোনো লেনদেন নেই।";
+}
+function copyRef(){
+let x=document.getElementById("refLink");
+x.select();
+document.execCommand("copy");
+alert("Copied");
+}
+document.getElementById("refLink").value=location.href+"?ref=demo";
+update();
+renderTasks();
+</script>
+</body>
+</html>
